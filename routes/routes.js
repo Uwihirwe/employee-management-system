@@ -1,42 +1,10 @@
 const express = require('express');
 const router = express.Router();
+const isAuthenticated = require('../middlewares/auth');
+const validateEmployee = require('../middlewares/validateEmployee');
 const Employee = require('../models/Employee');
 
-// Create a new Employee
-router.post('/', async (req, res) => {
-  try {
-    // Validate required fields
-    const { name, email, position, department, salary } = req.body;
-    
-    // Check if employee with same email already exists
-    const existingEmployee = await Employee.findOne({ email });
-    if (existingEmployee) {
-      return res.status(400).json({ message: 'Employee with this email already exists' });
-    }
-
-    // Create new employee
-    const newEmployee = new Employee({
-      name,
-      email,
-      position,
-      department,
-      salary
-    });
-
-      const savedEmployee = await newEmployee.save();
-    res.status(201).json({ 
-      message: 'Employee created successfully',
-      employee: savedEmployee 
-    });
-  } catch (err) {
-    res.status(400).json({ 
-      message: 'Error creating employee', 
-      error: err.message 
-    });
-  }
-});
-
-// Get all Employees
+// Public route - no authentication needed
 router.get('/', async (req, res) => {
   try {
     // Pagination
@@ -46,7 +14,7 @@ router.get('/', async (req, res) => {
 
     // Filtering options
     const filter = {};
-if (req.query.department) {
+    if (req.query.department) {
       filter.department = req.query.department;
     }
     if (req.query.position) {
@@ -78,8 +46,8 @@ if (req.query.department) {
   }
 });
 
-// Get a Single Employee by ID
-router.get('/:id', async (req, res) => {
+// Protected routes - require authentication
+router.get('/:id', isAuthenticated, async (req, res) => {
   try {
     const employee = await Employee.findById(req.params.id);
     
@@ -96,13 +64,41 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// Update an Employee
-router.put('/:id', async (req, res) => {
+router.post('/', isAuthenticated, validateEmployee, async (req, res) => {
   try {
-    // Prevent updating email
-    if (req.body.email) {
-      return res.status(400).json({ message: 'Email cannot be updated' });
+    // Validate required fields
+    const { name, email, position, department, salary } = req.body;
+    
+    // Check if employee with same email already exists
+    const existingEmployee = await Employee.findOne({ email });
+    if (existingEmployee) {
+      return res.status(400).json({ message: 'Employee with this email already exists' });
     }
+
+    // Create new employee
+    const newEmployee = new Employee({
+      name,
+      email,
+      position,
+      department,
+      salary
+    });
+
+    const savedEmployee = await newEmployee.save();
+    res.status(201).json({ 
+      message: 'Employee created successfully',
+      employee: savedEmployee 
+    });
+  } catch (err) {
+    res.status(400).json({ 
+      message: 'Error creating employee', 
+      error: err.message 
+    });
+  }
+});
+
+router.put('/:id', isAuthenticated, validateEmployee, async (req, res) => {
+  try {
 
     const updatedEmployee = await Employee.findByIdAndUpdate(
       req.params.id, 
@@ -126,8 +122,7 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-// Delete an Employee
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', isAuthenticated, async (req, res) => {
   try {
     const deletedEmployee = await Employee.findByIdAndDelete(req.params.id);
     
@@ -146,7 +141,5 @@ router.delete('/:id', async (req, res) => {
     });
   }
 });
-
-
 
 module.exports = router;

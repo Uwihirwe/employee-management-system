@@ -3,6 +3,8 @@ const express = require('express');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const employeeRoutes = require('./routes/routes');
+const authRoutes = require('./routes/authRoutes');
+const Joi = require('joi');
 
 // Create Express App
 const app = express();
@@ -11,6 +13,7 @@ const app = express();
 app.use(bodyParser.json());
 
 // Routes
+app.use('/api/auth', authRoutes);
 app.use('/api/employees', employeeRoutes);
 
 // MongoDB Connection
