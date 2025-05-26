@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
+const cors = require('cors'); // Add cors package
 const employeeRoutes = require('./routes/routes');
 const authRoutes = require('./routes/authRoutes');
 const Joi = require('joi');
@@ -11,6 +12,7 @@ const app = express();
 
 // Middleware
 app.use(bodyParser.json());
+app.use(cors()); // Enable CORS for all routes
 
 // Routes
 app.use('/api/auth', authRoutes);
